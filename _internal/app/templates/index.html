@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block header %}
+<h1>Welcome</h1>
+<h2>Scrape concert listings into FileMaker</h2>
+{% endblock %}
+{% block body %}
+<section class="panel">
+  <h2>New batch</h2>
+  <p class="muted">Sign in to Claris, give a list of venue links and a date window, then review what was found.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="/claris">Create New Listing Batch</a>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Previous batches</h2>
+  <p class="muted small">Batches are only visible here for 30 days.</p>
+  {% if batchData|length > 0 %}
+  <ul class="batch-list">
+    {% for struct in batchData %}
+    <li>
+      <dl>
+        <div><dt>Date:</dt><dd>{{ struct[0] }}</dd></div>
+        <div><dt>Inserted:</dt><dd>{{ struct[1] }}</dd></div>
+        <div><dt>Deleted:</dt><dd>{{ struct[2] }}</dd></div>
+      </dl>
+      <a class="btn" href="/end?index={{ loop.index0 }}">View</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>There are no prior batches.</p>
+  {% endif %}
+</section>
+{% endblock %}

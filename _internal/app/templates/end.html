@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Batch summary · ListingLoader{% endblock %}
+{% block header %}
+{% if batch %}
+<h1>Successfully inserted {{ batch.inserts }} listings and deleted {{ batch.deletes }} listings</h1>
+<hr class="end-hr">
+<h2>Run completed {{ batch.datetimestr[:16]|replace("T", " at ") if batch.datetimestr else batch.date }}</h2>
+{% else %}
+<h1>No Batches Yet</h1>
+{% endif %}
+{% endblock %}
+
+{% block body %}
+{% if batch %}
+<div class="stats">
+  <div class="stat"><span class="value">{{ batch.inserts }}</span><span class="name">Inserted</span></div>
+  <div class="stat"><span class="value">{{ batch.deletes }}</span><span class="name">Deleted</span></div>
+  <div class="stat"><span class="value">{{ batch.runTime }}s</span><span class="name">Scrape time</span></div>
+  <div class="stat"><span class="value">${{ batch['costDollars'] }}</span><span class="name">{{ batch['costTokens'] }} tokens</span></div>
+</div>
+
+<section class="panel">
+  <h2>Errors</h2>
+  {% if batch['errors']|length > 0 %}
+  <ul class="error-list">
+    {% for error in batch['errors'] %}
+    <li>
+      <p class="link">{{ error[0]['link'] or "Unknown link" }}</p>
+      <p class="message">{{ error[0]['error'] or error[1] }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No errors in this batch</p>
+  {% endif %}
+</section>
+
+<nav class="pager" aria-label="Batches">
+  <a href="/end?index={{ lastInd }}">Previous</a>
+  <a href="/end?index={{ nextInd }}">Next</a>
+</nav>
+{% else %}
+<section class="panel">
+  <p>No batches have been completed yet.</p>
+  <div class="actions"><a class="btn btn-primary" href="/">Return to home page</a></div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}New batch · ListingLoader{% endblock %}
+{% block header %}
+<h1>Generate a New Batch of Listings</h1>
+<h2>Step 2 of 4 &middot; Choose what to scrape</h2>
+{% endblock %}
+{% block body %}
+<section class="panel">
+  <form action="/makebatch" method="post">
+    <div class="field">
+      <label for="key">Anthropic API key</label>
+      <input type="text" id="key" name="key" autocomplete="off" spellcheck="false" required>
+      <p class="hint"><a href="https://support.claude.com/en/articles/8114521-how-can-i-access-the-claude-api" target="_blank" rel="noopener">How to obtain an Anthropic API key</a></p>
+    </div>
+    <div class="field">
+      <label for="links">Links</label>
+      <input type="text" id="links" name="links" spellcheck="false" required>
+      <p class="hint">Separate links with commas, e.g. https://venue-one.org, https://venue-two.org</p>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="startdate">Start of time window</label>
+        <input type="date" name="startdate" id="startdate" required>
+      </div>
+      <div class="field">
+        <label for="enddate">End of time window</label>
+        <input type="date" name="enddate" id="enddate" required>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn-primary" data-loading="Checking API key…">Continue</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ListingLoader{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <div class="inbar">
+        <a class="brand" href="/">ListingLoader</a>
+        <a class="home" href="/">Home</a>
+      </div>
+        <div class="page-heading">
+          {% block header %}{% endblock %}
+        </div>
+    </div>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flashes" role="alert">
+      {% for message in messages %}
+      <div class="flash">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block body %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="bar">
+      <span class="footer-text">ListingLoader &middot; concert listings</span>
+    </div>
+  </footer>
+
+  <script>
+
+    document.addEventListener('submit', (e) => {
+      const form = e.target;
+      if (form.dataset.submitting) { e.preventDefault(); return; }
+      const btn = e.submitter;
+      if (!btn || !btn.hasAttribute('data-loading')) return;
+      form.dataset.submitting = '1';
+      btn.classList.add('is-loading');
+      btn.setAttribute('aria-busy', 'true');
+      if (btn.dataset.loading) {
+        btn.dataset.idleLabel = btn.textContent;
+        btn.textContent = btn.dataset.loading;
+      }
+    });
+
+    // Coming back with the Back button restores the page from cache with the spinner
+    // still running; reset it.
+    window.addEventListener('pageshow', (e) => {
+      if (!e.persisted) return;
+      document.querySelectorAll('form[data-submitting]').forEach(f => delete f.dataset.submitting);
+      document.querySelectorAll('.is-loading').forEach(btn => {
+        btn.classList.remove('is-loading');
+        btn.removeAttribute('aria-busy');
+        if (btn.dataset.idleLabel) btn.textContent = btn.dataset.idleLabel;
+      });
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

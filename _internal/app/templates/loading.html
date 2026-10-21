@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Scraping · ListingLoader{% endblock %}
+{% block header %}
+<h1>Waiting for program to execute...</h1>
+<h2>Claude is reading each venue's site. You can leave this tab open.</h2>
+{% endblock %}
+{% block body %}
+<section class="panel">
+  <div class="loader">
+    <span class="square" aria-hidden="true"></span>
+    <span class="status" id="text" aria-live="polite">Starting…</span>
+  </div>
+  <div class="progress" role="progressbar" aria-labelledby="text" aria-valuemin="0" aria-valuemax="100" id="load">
+    <span class="fill" id="fill"></span>
+  </div>
+  <div class="eta">
+    <span class="remaining" id="remaining">Estimating time remaining…</span>
+    <span class="muted" id="elapsed"></span>
+  </div>
+</section>
+<p class="muted small">
+  Each link is scraped in parallel, so the whole batch takes about as long as its slowest site.
+  Any site still running after {{ (timeout // 60) }} minutes is stopped and reported as an error.
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Seconds each past scrape took (one per link, from logs/), sorted ascending.
+  const PAST = {{ durations|tojson }};
+  const TIMEOUT = {{ timeout }};
+  const startedAgo = {{ elapsed }};     
+  const t0 = performance.now();
+  const elapsed = () => startedAgo + (performance.now() - t0) / 1000;
+
+  const text = document.getElementById('text');
+  const bar = document.getElementById('load');
+  const fill = document.getElementById('fill');
+  const remainingEl = document.getElementById('remaining');
+  const elapsedEl = document.getElementById('elapsed');
+
+  let done = 0, total = 0, known = false;
+
+  function fmt(s) {
+    s = Math.max(0, Math.round(s));
+    const m = Math.floor(s / 60), r = s % 60;
+    return m ? `${m} min ${String(r).padStart(2, '0')} s` : `${r} s`;
+  }
+
+  // Expected value of the largest of `m` draws from `samples` (sorted ascending).
+  function expectedMax(samples, m) {
+    const n = samples.length;
+    let e = 0;
+    for (let i = 0; i < n; i++) e += samples[i] * (((i + 1) / n) ** m - (i / n) ** m);
+    return e;
+  }
+
+  function estimateRemaining(t) {
+    const left = total - done;
+    if (!known || left <= 0) return 0;
+    const tail = PAST.filter(d => d > t);
+    if (PAST.length < 5 || tail.length === 0) return null;   // no useful history
+    return Math.min(expectedMax(tail, left), TIMEOUT) - t;
+  }
+
+  function renderTime() {
+    const t = elapsed();
+    elapsedEl.textContent = `Elapsed ${fmt(t)}`;
+    if (!known) { remainingEl.textContent = 'Estimating time remaining…'; return; }
+    if (done >= total) { remainingEl.textContent = 'Finishing up…'; return; }
+    const r = estimateRemaining(t);
+    if (r === null) {
+      remainingEl.textContent = t < TIMEOUT
+        ? `Taking longer than usual · at most ${fmt(TIMEOUT - t)} more`
+        : 'Wrapping up the slowest sites…';
+    } else {
+      remainingEl.textContent = `About ${fmt(Math.max(r, 5))} remaining (estimate)`;
+    }
+  }
+
+  function renderProgress() {
+    const pct = total ? (100 * done) / total : 0;
+    fill.style.width = `${pct}%`;
+    bar.setAttribute('aria-valuenow', Math.round(pct));
+    text.textContent = total
+      ? `${done} of ${total} link${total === 1 ? '' : 's'} scraped · ${Math.round(pct)}%`
+      : 'Starting…';
+  }
+
+  setInterval(renderTime, 1000);
+  renderTime();
+
+  window.addEventListener('load', async () => {
+    while (!known || done < total) {
+      try {
+        const r = await (await fetch('progress', { method: 'GET' })).json();
+        done = r.cc;
+        total = r.max;
+        known = true;
+        renderProgress();
+        renderTime();
+      } catch (e) {
+        console.log(e);
+      }
+      if (known && done >= total) break;
+      await new Promise(r => setTimeout(r, 4000));
+    }
+    const res = await fetch('loading', { method: 'POST' });
+    if (res.redirected) window.location.href = res.url;
+  });
+</script>
+{% endblock %}

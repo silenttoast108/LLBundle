@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Confirm · ListingLoader{% endblock %}
+{% block header %}
+<h1>Confirm Links and Dates</h1>
+<h2>Step 3 of 4 &middot; Scraping starts when you confirm</h2>
+{% endblock %}
+{% block body %}
+<form action="/confirmation" method="post" id="form">
+  <section class="panel">
+    <h2 class="conf-header">Links</h2>
+    <div id="cardContainer">
+      {% for link in links %}
+      <div class="card" data-id="link{{ loop.index }}">
+        <input type="text" name="link{{ loop.index }}" value="{{ link }}" aria-label="Link {{ loop.index }}" spellcheck="false" required>
+        <button type="button" class="deleteCard btn-icon" aria-label="Remove link">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" id="addCard">+ Add link</button>
+  </section>
+
+  <section class="panel">
+    <h2 class="conf-header">Dates</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="startdate">Start</label>
+        <input type="date" id="startdate" name="startdate" value="{{ startdate }}" required>
+      </div>
+      <div class="field">
+        <label for="enddate">End</label>
+        <input type="date" id="enddate" name="enddate" value="{{ enddate }}" required>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button id="conf" type="submit" class="btn-primary" data-loading="Starting scrape…">Confirm</button>
+  </div>
+</form>
+
+<template id="cardTemplate">
+  <div class="card" data-id="">
+    <input type="text" name="" spellcheck="false">
+    <button type="button" class="deleteCard btn-icon" aria-label="Remove link">&times;</button>
+  </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const container = document.getElementById('cardContainer');
+  const template = document.getElementById('cardTemplate');
+  let cards = {{ links|length }} + 1;
+
+  document.getElementById('addCard').addEventListener('click', () => {
+    const clone = template.content.cloneNode(true);
+    const cardEl = clone.querySelector('.card');
+    const input = clone.querySelector('input');
+    const id = `link${cards++}`;
+    cardEl.dataset.id = id;
+    input.name = id;
+    input.setAttribute('aria-label', `Link ${cards - 1}`);
+    container.append(clone);
+    input.focus();
+  });
+
+  container.addEventListener('click', (e) => {
+    if (e.target.matches('.deleteCard')) e.target.closest('.card').remove();
+  });
+</script>
+{% endblock %}

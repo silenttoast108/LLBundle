@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Review listings · ListingLoader{% endblock %}
+{% block header %}
+<h1>Results Are In</h1>
+<h2>Step 4 of 4 &middot; Confirm each listing to proceed</h2>
+{% endblock %}
+{% block body %}
+<form action="/checker?index={{ curInd }}" method="post">
+  <section class="panel">
+    <h2>
+      Listing {{ curInd + 1 }}
+      {% if editClickable %}<span class="status-tag done">Confirmed</span>{% else %}<span class="status-tag">Needs review</span>{% endif %}
+    </h2>
+    <ul class="listing-fields">
+      {% for field in fields %}
+      <li>
+        <label for="{{ field[0] }}">{{ field[0] }}</label>
+        {% if editClickable %}
+        <input type="text" id="{{ field[0] }}" name="{{ field[0] }}" value="{{ field[1] }}" disabled>
+        {% elif field[0] in ("Performers", "Repertory") %}
+        <input type="text" id="{{ field[0] }}" name="{{ field[0] }}" value="{{ field[1] }}">
+        {% else %}
+        <input type="text" id="{{ field[0] }}" name="{{ field[0] }}" value="{{ field[1] }}" required>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <div class="actions">
+    {% if editClickable %}
+    <button type="submit" name="edit" value="edit">Edit Fields</button>
+    {% else %}
+    {# Confirming the last unchecked listing runs the FileMaker duplicate check. #}
+    <button type="submit" name="conf" value="conf" class="btn-primary" data-loading="Saving…">Confirm Fields</button>
+    <button type="submit" name="addListing" value="addListing" formnovalidate>Add Listing</button>
+    <button type="submit" name="deleteListing" value="deleteListing" class="btn-danger" formnovalidate onclick="return confirm('Are you sure you want to delete this listing?')">Delete Listing</button>
+    {% endif %}
+  </div>
+</form>
+
+<nav class="pager" aria-label="Listings">
+  <a href="/checker?index={{lastInd}}">Previous</a>
+  <a href="/checker?index={{nextInd}}">Next</a>
+</nav>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Possible duplicates · ListingLoader{% endblock %}
+{% block header %}
+<h1>Some entries may already exist in the database</h1>
+<h2>Choose an action for each entry</h2>
+{% endblock %}
+{% block body %}
+<section class="panel">
+  <h2>Possible duplicate {{ curInd + 1 }}</h2>
+  <p class="muted small">Rows marked &bull; differ between the two entries.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th scope="col">Field</th><th scope="col">New Entry</th><th scope="col">Pre-existing Entry</th></tr>
+      </thead>
+      <tbody>
+        {% for field in newFields %}
+        {% set existing = fields[loop.index0][1] if fields|length > loop.index0 else "" %}
+        {% if field[0] == "Date" and existing.count("/") == 2 %}
+          {# scraped dates are YYYY+MM+DD, FileMaker's are MM/DD/YYYY #}
+          {% set p = existing.split("/") %}
+          {% set same = field[1].replace("+", "") == p[2] ~ p[0] ~ p[1] %}
+        {% else %}
+          {% set same = field[1] == existing %}
+        {% endif %}
+        <tr{% if not same %} class="differs"{% endif %}>
+          <th scope="row">{{ field[0] }}</th>
+          <td>{{ field[1] }}</td>
+          <td>{{ existing }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<form action="/resolvecollisions?index={{ curInd }}" method="post" class="panel">
+  <h2>Choose an action</h2>
+  {# `selected` is the choice saved for this pair, so it stays checked after reloads and "Change Selection". #}
+  <div class="choices" role="radiogroup">
+    <label class="choice" for="pre"><input type="radio" name="action" value="old" id="pre"{% if selected == 'old' %} checked{% endif %}{% if not confClickable %} disabled{% endif %}> Keep only pre-existing</label>
+    <label class="choice" for="new"><input type="radio" name="action" value="new" id="new"{% if selected == 'new' %} checked{% endif %}{% if not confClickable %} disabled{% endif %}> Keep only new</label>
+    <label class="choice" for="both"><input type="radio" name="action" value="both" id="both"{% if selected == 'both' %} checked{% endif %}{% if not confClickable %} disabled{% endif %}> Keep both</label>
+  </div>
+  {% if confClickable %}
+  <div class="applyAll">
+    <label class="choice" for="apply"><input type="checkbox" name="apply" id="apply" value="apply"> Apply to all remaining duplicates</label>
+  </div>
+  {% endif %}
+  <div class="actions">
+    {% if confClickable %}
+    {# Confirming the last pair writes every listing to FileMaker. #}
+    <button type="submit" name="action2" value="conf" class="btn-primary" data-loading="Saving…" onclick="return !document.getElementById('apply').checked || confirm('Apply this action to all remaining possible duplicates?')">Confirm</button>
+    {% else %}
+    <button type="submit" name="action2" value="change">Change Selection</button>
+    {% endif %}
+  </div>
+</form>
+
+<nav class="pager" aria-label="Possible duplicates">
+  <a href="/resolvecollisions?index={{ lastInd }}">Previous</a>
+  <a href="/resolvecollisions?index={{ nextInd }}">Next</a>
+</nav>
+{% endblock %}

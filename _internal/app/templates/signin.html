@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Sign in · ListingLoader{% endblock %}
+{% block header %}
+<h1>Claris Sign In</h1>
+<h2>Step 1 of 4 &middot; Connect to the listings database</h2>
+{% endblock %}
+{% block body %}
+<section class="panel">
+  <h2>Provide Claris ID login info</h2>
+  <form action="/claris" method="post">
+    <div class="field">
+      <label for="user">Email</label>
+      <input type="text" id="user" name="user" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="pass">Password</label>
+      <input type="password" id="pass" name="pass" autocomplete="current-password" required>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn-primary" data-loading="Signing in…">Sign In</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
